@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Call Copilot</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Manrope:wght@400;500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <main id="appGrid" class="app-grid home-view">
+        <section id="setupPanel" class="panel setup-panel">
+          <div class="welcome-header">
+            <div>
+              <p class="eyebrow">Workspace</p>
+              <h1 class="welcome-title">Hi</h1>
+            </div>
+            <span id="healthBadge" class="badge">Checking API key</span>
+          </div>
+
+          <section class="calendar-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Upcoming client meetings</h2>
+                <p>Jump into the next conversation or prep the copilot ahead of time.</p>
+              </div>
+            </div>
+            <div class="calendar-list">
+              <article class="calendar-card">
+                <div class="calendar-time">
+                  <span>Today</span>
+                  <strong>10:30</strong>
+                </div>
+                <div class="calendar-copy">
+                  <h3>Northstar Health expansion review</h3>
+                  <p>Pricing pushback, security review, onboarding timeline</p>
+                </div>
+                <button class="mini-button join-meeting-button" type="button" data-provider="meet" data-link="https://meet.google.com/abc-defg-hij">
+                  Join
+                </button>
+              </article>
+
+              <article class="calendar-card">
+                <div class="calendar-time">
+                  <span>Today</span>
+                  <strong>13:00</strong>
+                </div>
+                <div class="calendar-copy">
+                  <h3>BluePeak retail pilot sync</h3>
+                  <p>Launch plan, internal enablement, executive alignment</p>
+                </div>
+                <button class="mini-button join-meeting-button" type="button" data-provider="zoom" data-link="https://zoom.us/j/1234567890">
+                  Join
+                </button>
+              </article>
+
+              <article class="calendar-card">
+                <div class="calendar-time">
+                  <span>Tomorrow</span>
+                  <strong>09:15</strong>
+                </div>
+                <div class="calendar-copy">
+                  <h3>Atlas Finance renewal call</h3>
+                  <p>Commercial renewal, stakeholder outreach, next-quarter expansion</p>
+                </div>
+                <button class="mini-button join-meeting-button" type="button" data-provider="teams" data-link="https://teams.microsoft.com/l/meetup-join/example">
+                  Join
+                </button>
+              </article>
+            </div>
+          </section>
+
+          <section class="launcher-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Meeting launchers</h2>
+                <p>Hover any button to add a link or start a new meeting.</p>
+              </div>
+            </div>
+
+            <div class="launcher-grid">
+              <article class="launcher-card">
+                <button class="launcher-button meet-button" type="button">
+                  <span class="launcher-logo">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                      <rect x="8" y="18" width="30" height="28" rx="6" fill="#34A853"></rect>
+                      <polygon points="40,26 56,18 56,46 40,38" fill="#4285F4"></polygon>
+                    </svg>
+                  </span>
+                  <span>Google Meet</span>
+                </button>
+                <div class="launcher-menu">
+                  <button class="mini-button provider-add-link" type="button" data-provider="meet">Add link</button>
+                  <button class="mini-button provider-start-new" type="button" data-provider="meet">Start new</button>
+                </div>
+              </article>
+
+              <article class="launcher-card">
+                <button class="launcher-button zoom-button" type="button">
+                  <span class="launcher-logo">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                      <rect x="8" y="16" width="48" height="32" rx="12" fill="#2D8CFF"></rect>
+                      <rect x="20" y="24" width="16" height="16" rx="4" fill="#ffffff"></rect>
+                      <polygon points="38,28 48,22 48,42 38,36" fill="#ffffff"></polygon>
+                    </svg>
+                  </span>
+                  <span>Zoom</span>
+                </button>
+                <div class="launcher-menu">
+                  <button class="mini-button provider-add-link" type="button" data-provider="zoom">Add link</button>
+                  <button class="mini-button provider-start-new" type="button" data-provider="zoom">Start new</button>
+                </div>
+              </article>
+
+              <article class="launcher-card">
+                <button class="launcher-button teams-button" type="button">
+                  <span class="launcher-logo">
+                    <svg viewBox="0 0 64 64" aria-hidden="true">
+                      <rect x="18" y="14" width="24" height="36" rx="6" fill="#6264A7"></rect>
+                      <circle cx="47" cy="24" r="7" fill="#7B83EB"></circle>
+                      <rect x="42" y="28" width="14" height="18" rx="5" fill="#7B83EB"></rect>
+                      <path d="M24 24h12v4h-4v14h-4V28h-4z" fill="#ffffff"></path>
+                    </svg>
+                  </span>
+                  <span>Teams</span>
+                </button>
+                <div class="launcher-menu">
+                  <button class="mini-button provider-add-link" type="button" data-provider="teams">Add link</button>
+                  <button class="mini-button provider-start-new" type="button" data-provider="teams">Start new</button>
+                </div>
+              </article>
+            </div>
+
+            <label class="field">
+              <span id="meetingUrlLabel">Meeting link</span>
+              <input
+                id="meetUrlInput"
+                name="meetUrl"
+                type="url"
+                placeholder="Paste a meeting link here"
+              />
+            </label>
+            <div class="action-row">
+              <button id="openMeetButton" class="secondary-button" type="button">
+                Load in call window
+              </button>
+              <span id="meetStatus" class="micro-status">Pick a meeting source to continue</span>
+            </div>
+          </section>
+
+          <label class="field">
+            <span>Recorded call video</span>
+            <input id="videoInput" name="video" type="file" accept=".mp4,.mpeg,.mpga,.m4a,.wav,.webm" />
+          </label>
+        </section>
+
+        <section id="workspacePanel" class="panel workspace-panel route-hidden">
+          <div class="panel-heading">
+            <div class="workspace-heading">
+              <h2>Live call copilot</h2>
+              <button id="backToHomeButton" class="secondary-button" type="button">
+                Back to meetings
+              </button>
+            </div>
+            <span id="statusText" class="status-pill">Waiting for input</span>
+          </div>
+
+          <section class="workspace-grid">
+            <div class="call-column">
+              <section class="call-stage">
+                <div class="section-heading">
+                  <div>
+                    <h3>Call window</h3>
+                    <p>Meeting or uploaded video stays in focus here. Drag the lower edge to stretch it.</p>
+                  </div>
+                  <button id="toggleCallFocusButton" class="mini-button" type="button">
+                    Expand call
+                  </button>
+                </div>
+                <div id="callSurface" class="call-surface resizable-surface">
+                  <div id="callEmptyState" class="call-empty-state">
+                    Add a Meet URL or choose a recorded call video to load the call surface.
+                  </div>
+                  <iframe
+                    id="callFrame"
+                    class="call-frame hidden"
+                    title="Call surface"
+                    allow="camera; microphone; display-capture; autoplay; clipboard-read; clipboard-write"
+                    referrerpolicy="strict-origin-when-cross-origin"
+                  ></iframe>
+                  <video id="videoPreview" class="video-preview hidden" controls playsinline></video>
+                </div>
+              </section>
+
+              <section class="transcript-stage">
+                <div class="section-heading">
+                  <div>
+                    <h3>Live transcription window</h3>
+                    <p>Feed the orchestration engine with live notes or microphone capture. Drag the lower edge to stretch it.</p>
+                  </div>
+                  <button id="toggleTranscriptFocusButton" class="mini-button" type="button">
+                    Expand transcript
+                  </button>
+                </div>
+                <div id="transcriptWindow" class="transcript-window resizable-surface">
+                  <textarea
+                    id="liveTranscriptInput"
+                    class="live-transcript-input"
+                    rows="8"
+                    placeholder="Paste or type transcript chunks here."
+                  ></textarea>
+                </div>
+                <div class="action-row transcript-actions">
+                  <button id="processTranscriptButton" class="primary-button" type="button">
+                    Run orchestration
+                  </button>
+                  <button id="startRealtimeButton" class="secondary-button" type="button">
+                    Start live capture
+                  </button>
+                  <button id="stopRealtimeButton" class="secondary-button" type="button" disabled>
+                    Stop capture
+                  </button>
+                  <button id="loadDemoTranscriptButton" class="secondary-button" type="button">
+                    Load demo transcript
+                  </button>
+                </div>
+                <p id="realtimeStatus" class="form-note">
+                  Live capture is idle. If supported by your browser, microphone transcription will stream into this panel.
+                </p>
+                <section class="analysis-card">
+                  <div class="section-heading">
+                    <h3>Playback sync</h3>
+                    <p id="playbackSyncLabel">Waiting for video transcript</p>
+                  </div>
+                  <p id="activeTranscriptExcerpt" class="analysis-copy">
+                    Once a timestamped transcript is available, the active call excerpt will appear here.
+                  </p>
+                </section>
+              </section>
+            </div>
+
+            <div
+              id="workspaceSplitter"
+              class="workspace-splitter"
+              role="separator"
+              aria-orientation="vertical"
+              aria-label="Resize call and agent panels"
+              tabindex="0"
+            ></div>
+
+            <aside class="agent-panel">
+              <div class="section-heading">
+                <div>
+                  <h3>Employee agent panel</h3>
+                  <p>Suggested joiners and active contributors.</p>
+                </div>
+                <span id="orchestrationMode" class="badge">Standby</span>
+              </div>
+
+              <section class="orchestration-overview">
+                <div class="overview-card">
+                  <span class="overview-label">Lead agent</span>
+                  <strong id="leadAgentName">Awaiting transcript</strong>
+                  <p id="leadAgentReason" class="support-text">No transcript has been processed yet.</p>
+                </div>
+                <div class="overview-card">
+                  <span class="overview-label">Swarm confidence</span>
+                  <strong id="swarmConfidence">0%</strong>
+                  <p id="orchestrationSummary" class="support-text">Weighted routing will appear here.</p>
+                </div>
+              </section>
+
+              <section class="signal-box interactive-console-box">
+                <div class="section-heading">
+                  <h3>Interactive agent console</h3>
+                  <p>Click any agent and direct how they should engage in the call.</p>
+                </div>
+                <div id="selectedAgentConsole" class="selected-agent-console"></div>
+              </section>
+
+              <section class="signal-box">
+                <div class="section-heading">
+                  <h3>Live analysis</h3>
+                  <p>Continuous readout from the current transcript window.</p>
+                </div>
+                <div class="analysis-metrics">
+                  <article class="analysis-metric-card">
+                    <span class="overview-label">Risk level</span>
+                    <strong id="riskLevel">Low</strong>
+                  </article>
+                  <article class="analysis-metric-card">
+                    <span class="overview-label">Momentum</span>
+                    <strong id="momentumLevel">Neutral</strong>
+                  </article>
+                </div>
+                <p id="analysisSummary" class="support-text">
+                  Live analysis will appear once transcript events start flowing.
+                </p>
+                <ul id="analysisAlerts" class="stack-list"></ul>
+              </section>
+
+              <section class="signal-box">
+                <div class="section-heading">
+                  <h3>Join recommendations</h3>
+                  <p>Invite the right employee agents into the call.</p>
+                </div>
+                <div id="joinRecommendations" class="join-recommendations"></div>
+              </section>
+
+              <section class="signal-box">
+                <div class="section-heading">
+                  <h3>Joined agents</h3>
+                  <p>Accepted agents take the brief and contribute live.</p>
+                </div>
+                <div id="joinedAgents" class="joined-agents"></div>
+              </section>
+
+              <details class="signal-box swarm-panel">
+                <summary class="swarm-summary">
+                  <div>
+                    <h3>Agent swarm</h3>
+                    <p>Weighted routing across internal functions.</p>
+                  </div>
+                </summary>
+                <div id="employeeAgentGrid" class="employee-agent-grid"></div>
+              </details>
+            </aside>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
