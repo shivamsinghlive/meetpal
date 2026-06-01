@@ -13,9 +13,11 @@ const videoPreview = document.getElementById("videoPreview");
 const callFrame = document.getElementById("callFrame");
 const callEmptyState = document.getElementById("callEmptyState");
 const callColumn = document.querySelector(".call-column");
+const transcriptStage = document.getElementById("transcriptStage");
 const workspaceGrid = document.querySelector(".workspace-grid");
 const workspaceSplitter = document.getElementById("workspaceSplitter");
 const toggleCallFocusButton = document.getElementById("toggleCallFocusButton");
+const toggleTranscriptVisibilityButton = document.getElementById("toggleTranscriptVisibilityButton");
 const toggleTranscriptFocusButton = document.getElementById("toggleTranscriptFocusButton");
 const liveTranscriptInput = document.getElementById("liveTranscriptInput");
 const processTranscriptButton = document.getElementById("processTranscriptButton");
@@ -26,10 +28,14 @@ const realtimeStatus = document.getElementById("realtimeStatus");
 const playbackSyncLabel = document.getElementById("playbackSyncLabel");
 const activeTranscriptExcerpt = document.getElementById("activeTranscriptExcerpt");
 const orchestrationMode = document.getElementById("orchestrationMode");
+const agentThinkingStage = document.getElementById("agentThinkingStage");
 const leadAgentName = document.getElementById("leadAgentName");
 const leadAgentReason = document.getElementById("leadAgentReason");
 const swarmConfidence = document.getElementById("swarmConfidence");
 const orchestrationSummary = document.getElementById("orchestrationSummary");
+const confidenceRing = document.getElementById("confidenceRing");
+const leadAgentAvatar = document.getElementById("leadAgentAvatar");
+const swarmMap = document.getElementById("swarmMap");
 const detectedThemes = document.getElementById("detectedThemes");
 const handoffList = document.getElementById("handoffList");
 const riskLevel = document.getElementById("riskLevel");
@@ -45,57 +51,62 @@ const API_BASE = window.location.protocol === "file:" ? "http://localhost:3000" 
 const DEFAULT_MEET_STATUS = "Pick a meeting source to continue";
 const employeeAgents = [
   {
-    id: "sales",
-    name: "Maya Chen",
-    title: "Sales Lead",
-    domain: "Sales",
-    bias: "Leans toward urgency, deal velocity, pricing flexibility, and closing signals.",
-    weights: { pricing: 1.4, urgency: 1.35, expansion: 1.15, objections: 1.1, risk: 0.8, marketing: 0.7, operations: 0.65 },
+    id: "frontend",
+    name: "Ava Park",
+    title: "Frontend Agent",
+    domain: "Frontend",
+    bias: "Obsesses over layout, interaction design, responsive behavior, motion, accessibility, and polished user experience.",
+    weights: { ui: 1.55, ux: 1.45, accessibility: 1.2, performance: 0.9, realtime: 0.85, testing: 0.7, observability: 0.45, deployment: 0.4 },
   },
   {
-    id: "marketing",
-    name: "Jonas Reed",
-    title: "Marketing Strategist",
-    domain: "Marketing",
-    bias: "Looks for positioning clarity, launch support, proof points, and market narrative.",
-    weights: { marketing: 1.5, launch: 1.35, expansion: 1.1, objections: 0.9, pricing: 0.65, operations: 0.6, risk: 0.7 },
+    id: "backend",
+    name: "Rohan Iyer",
+    title: "Backend Agent",
+    domain: "Backend",
+    bias: "Focuses on APIs, request flow, auth, integrations, error handling, data contracts, and system correctness.",
+    weights: { api: 1.55, infrastructure: 1.35, performance: 1.15, security: 1.05, deployment: 0.95, data: 0.9, observability: 0.8, ui: 0.35 },
   },
   {
-    id: "bizops",
-    name: "Ari Patel",
-    title: "Business Ops Partner",
-    domain: "Business Ops",
-    bias: "Optimizes onboarding, implementation effort, process reliability, and cross-team dependencies.",
-    weights: { operations: 1.45, timeline: 1.25, risk: 1.15, launch: 0.9, urgency: 0.8, pricing: 0.6, marketing: 0.55 },
+    id: "ml",
+    name: "Sana Gupta",
+    title: "ML Agent",
+    domain: "ML",
+    bias: "Looks at models, data quality, feature signals, ranking logic, and whether the intelligence layer is actually useful.",
+    weights: { ml: 1.6, data: 1.35, evaluation: 1.1, performance: 0.95, observability: 0.9, llmops: 0.9, api: 0.55, ui: 0.3 },
   },
   {
-    id: "outreach",
-    name: "Elena Brooks",
-    title: "Client Outreach Manager",
-    domain: "Client Outreach",
-    bias: "Focuses on stakeholder follow-up, client trust, communication gaps, and next-touch sequencing.",
-    weights: { objections: 1.2, expansion: 1.1, urgency: 1.0, risk: 0.95, marketing: 0.85, timeline: 0.8, pricing: 0.7 },
+    id: "llmops",
+    name: "Noah Kim",
+    title: "LLMOps Agent",
+    domain: "LLMOps",
+    bias: "Cares about prompts, routing, model choice, tracing, evals, safety, context windows, and orchestration reliability.",
+    weights: { llmops: 1.6, observability: 1.35, evaluation: 1.25, api: 0.95, ml: 0.9, realtime: 0.85, deployment: 0.75, ui: 0.35 },
   },
   {
-    id: "executive",
-    name: "Daniel Ross",
-    title: "Executive Sponsor",
-    domain: "Executive",
-    bias: "Frames everything around strategic fit, revenue impact, risk exposure, and executive confidence.",
-    weights: { risk: 1.35, expansion: 1.3, pricing: 1.0, urgency: 1.0, launch: 0.9, marketing: 0.8, operations: 0.85 },
+    id: "mlops",
+    name: "Leila Ramos",
+    title: "MLOps Agent",
+    domain: "MLOps",
+    bias: "Optimizes deployment, infra, scaling, data pipelines, monitoring, reproducibility, and model-serving operations.",
+    weights: { deployment: 1.55, infrastructure: 1.45, observability: 1.25, data: 1.05, performance: 1.0, security: 0.9, ml: 0.8, api: 0.7 },
   },
 ];
 
 const signalLexicon = {
-  pricing: ["price", "pricing", "budget", "cost", "discount", "roi", "commercial", "spend"],
-  urgency: ["urgent", "asap", "quarter", "deadline", "fast", "soon", "immediately", "this month"],
-  expansion: ["expand", "growth", "scale", "pipeline", "revenue", "upsell", "cross-sell", "enterprise"],
-  objections: ["concern", "hesitant", "objection", "unclear", "question", "doubt", "pushback", "skeptical"],
-  risk: ["risk", "security", "compliance", "legal", "migration", "downtime", "trust", "reliability"],
-  marketing: ["campaign", "messaging", "brand", "positioning", "launch", "story", "content", "adoption"],
-  operations: ["implementation", "onboarding", "workflow", "process", "integration", "ops", "support", "enablement"],
-  timeline: ["timeline", "schedule", "rollout", "next week", "next month", "milestone", "target date"],
-  launch: ["launch", "go-live", "release", "announcement", "rollout", "activation"],
+  ui: ["ui", "frontend", "layout", "component", "button", "design", "css", "screen", "visual"],
+  ux: ["ux", "flow", "experience", "interactive", "resize", "transcript", "navigation", "usability"],
+  accessibility: ["accessibility", "keyboard", "focus", "contrast", "screen reader", "a11y"],
+  api: ["api", "endpoint", "request", "response", "server", "backend", "route", "webhook"],
+  infrastructure: ["infra", "infrastructure", "database", "queue", "cache", "storage", "service", "serverless"],
+  performance: ["performance", "latency", "slow", "speed", "optimize", "throughput", "memory"],
+  security: ["security", "auth", "token", "secret", "permission", "policy", "compliance"],
+  data: ["data", "dataset", "pipeline", "features", "training", "ingest", "schema", "vector"],
+  ml: ["model", "ml", "machine learning", "ranking", "classification", "prediction", "embedding"],
+  llmops: ["prompt", "agent", "orchestration", "context", "tool", "trace", "weave", "llmops"],
+  observability: ["trace", "logging", "monitor", "telemetry", "wandb", "weights and biases", "weave"],
+  evaluation: ["eval", "evaluation", "benchmark", "judge", "score", "metric", "quality"],
+  deployment: ["deploy", "production", "release", "shipping", "ci", "rollout", "runtime"],
+  realtime: ["realtime", "real-time", "stream", "streaming", "live", "meeting", "transcript"],
 };
 
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -107,9 +118,21 @@ let lastSyncedSecond = -1;
 let manualTranscriptTimer = null;
 let activeMeetingProvider = "meet";
 let leftPaneFocus = "default";
-let selectedAgentId = "sales";
+let transcriptVisible = false;
+let selectedAgentId = "frontend";
 let currentOrchestrationState = buildInitialOrchestrationState();
 let isDraggingWorkspaceSplitter = false;
+let thinkingStageTimer = null;
+let agentThinkingState = {
+  mode: "idle",
+  agents: employeeAgents.slice(0, 3).map((agent) => ({
+    id: agent.id,
+    name: agent.name,
+    domain: agent.domain,
+    line: "Waiting for transcript context.",
+    state: "idle",
+  })),
+};
 
 const providerDefaults = {
   meet: {
@@ -146,38 +169,41 @@ renderAnalysisState({
   summary: "Live analysis will appear once transcript events start flowing.",
   alerts: ["Upload a video or start live capture to begin continuous analysis."],
 });
+renderThinkingStage();
 renderSelectedAgentConsole();
 applyProviderUI(activeMeetingProvider);
 applyRouteState(readRouteState(), { replaceHistory: true });
 
-videoInput.addEventListener("change", () => {
-  const [file] = videoInput.files || [];
+if (videoInput) {
+  videoInput.addEventListener("change", () => {
+    const [file] = videoInput.files || [];
 
-  if (!file) {
-    clearVideoPreview();
-    return;
-  }
+    if (!file) {
+      clearVideoPreview();
+      return;
+    }
 
-  const objectUrl = URL.createObjectURL(file);
-  const previousUrl = videoPreview.dataset.objectUrl;
+    const objectUrl = URL.createObjectURL(file);
+    const previousUrl = videoPreview.dataset.objectUrl;
 
-  if (previousUrl) {
-    URL.revokeObjectURL(previousUrl);
-  }
+    if (previousUrl) {
+      URL.revokeObjectURL(previousUrl);
+    }
 
-  callFrame.src = "";
-  callFrame.classList.add("hidden");
-  callEmptyState.classList.add("hidden");
-  videoPreview.src = objectUrl;
-  videoPreview.dataset.objectUrl = objectUrl;
-  videoPreview.classList.remove("hidden");
-  statusText.textContent = "Recorded call loaded";
-  enterCallView({
-    provider: "upload",
-    mode: "video",
+    callFrame.src = "";
+    callFrame.classList.add("hidden");
+    callEmptyState.classList.add("hidden");
+    videoPreview.src = objectUrl;
+    videoPreview.dataset.objectUrl = objectUrl;
+    videoPreview.classList.remove("hidden");
+    statusText.textContent = "Recorded call loaded";
+    enterCallView({
+      provider: "upload",
+      mode: "video",
+    });
+    setupVideoSync(file);
   });
-  setupVideoSync(file);
-});
+}
 
 document.querySelectorAll(".join-meeting-button").forEach((button) => {
   button.addEventListener("click", () => {
@@ -274,6 +300,10 @@ openMeetButton.addEventListener("click", () => {
 
 toggleCallFocusButton.addEventListener("click", () => {
   setLeftPaneFocus(leftPaneFocus === "call" ? "default" : "call");
+});
+
+toggleTranscriptVisibilityButton.addEventListener("click", () => {
+  setTranscriptVisibility(!transcriptVisible);
 });
 
 toggleTranscriptFocusButton.addEventListener("click", () => {
@@ -404,7 +434,7 @@ liveTranscriptInput.addEventListener("input", () => {
 
 loadDemoTranscriptButton.addEventListener("click", () => {
   liveTranscriptInput.value =
-    "The client likes the product direction but is worried about migration risk, pricing flexibility, and whether we can support a launch before next quarter. They asked for executive reassurance, operational onboarding detail, and stronger messaging for their internal team.";
+    "We need the call copilot to feel polished in the UI, keep a live transcript running during the meeting, route work between frontend and backend cleanly, and trace agent decisions with Weave. The team also wants better evals, production-safe deployment, and a stronger orchestration layer for the specialist agents.";
   runLiveOrchestration(liveTranscriptInput.value);
 });
 
@@ -493,10 +523,21 @@ async function checkHealth() {
 function runLiveOrchestration(transcript, options = {}) {
   if (!transcript) {
     currentOrchestrationState = buildInitialOrchestrationState();
+    resetThinkingStage();
     orchestrationMode.textContent = "Standby";
     leadAgentName.textContent = "Awaiting transcript";
-    leadAgentReason.textContent = "Add a live transcript excerpt to activate the employee swarm.";
+    leadAgentReason.textContent = "Add a live transcript excerpt to activate the build swarm.";
     swarmConfidence.textContent = "0%";
+
+    if (leadAgentAvatar) {
+      leadAgentAvatar.textContent = "—";
+      leadAgentAvatar.className = "agent-avatar agent-avatar-md";
+    }
+
+    if (confidenceRing) {
+      confidenceRing.style.setProperty("--pct", 0);
+    }
+    renderSwarmMap([], null);
     orchestrationSummary.textContent = "Weighted routing will appear here.";
     if (detectedThemes) {
       detectedThemes.innerHTML = "";
@@ -521,6 +562,7 @@ function runLiveOrchestration(transcript, options = {}) {
         focusAreas: [],
         recommendation: "Waiting for transcript signal.",
         status: "standby",
+        uiState: "idle",
       })),
     );
     selectedAgentId = currentOrchestrationState.leader.id;
@@ -556,6 +598,7 @@ function runLiveOrchestration(transcript, options = {}) {
     normalizedScore: Math.max(8, Math.round((agent.score / topScore) * 100)),
     status: index < 3 ? "active" : "monitoring",
     recommendation: buildRecommendation(agent, nonZeroSignals),
+    uiState: index < 3 ? "thinking" : "monitoring",
   }));
 
   const leader = normalizedAgents[0];
@@ -566,6 +609,15 @@ function runLiveOrchestration(transcript, options = {}) {
   leadAgentName.textContent = `${leader.name} • ${leader.title}`;
   leadAgentReason.textContent = `${leader.domain} takes point because the transcript is strongest on ${leader.focusAreas.join(", ") || "cross-functional signals"}.`;
   swarmConfidence.textContent = `${swarm}%`;
+
+  if (leadAgentAvatar) {
+    leadAgentAvatar.textContent = getInitials(leader.name);
+    leadAgentAvatar.className = `agent-avatar agent-avatar-md domain-${leader.id}`;
+  }
+
+  if (confidenceRing) {
+    confidenceRing.style.setProperty("--pct", swarm);
+  }
   orchestrationSummary.textContent = `${leader.domain} leads while ${collaborators.map((agent) => agent.domain).join(" and ")} support the next move.`;
 
   if (detectedThemes) {
@@ -600,6 +652,8 @@ function runLiveOrchestration(transcript, options = {}) {
     collaborators,
     analysisState: buildAnalysisState(nonZeroSignals, leader, collaborators),
   };
+  renderSwarmMap(normalizedAgents, leader);
+  triggerThinkingStage(normalizedAgents, nonZeroSignals);
   selectedAgentId = normalizedAgents.some((agent) => agent.id === selectedAgentId) ? selectedAgentId : leader.id;
   renderJoinRecommendations(recommendations);
   renderJoinedAgents(acceptedAgents, nonZeroSignals);
@@ -628,11 +682,11 @@ function countMatches(text, keyword) {
 function buildRecommendation(agent, nonZeroSignals) {
   const strongestSignal = nonZeroSignals[0]?.[0] || "discovery";
   const recommendations = {
-    sales: `Pressure-test commercial positioning around ${strongestSignal} and define the ask for the next meeting.`,
-    marketing: `Package the story around ${strongestSignal} with proof points the client can replay internally.`,
-    bizops: `Turn ${strongestSignal} into a concrete implementation plan with owners, dates, and risk controls.`,
-    outreach: `Sequence follow-up around ${strongestSignal} so stakeholders feel heard quickly after the call.`,
-    executive: `Frame ${strongestSignal} as an executive decision with downside protection and business upside.`,
+    frontend: `Polish the user flow around ${strongestSignal} and make the product feel clearer, smoother, and easier to demo.`,
+    backend: `Harden the system path around ${strongestSignal} so the app behaves predictably under real usage.`,
+    ml: `Improve the intelligence layer around ${strongestSignal} and make the decisioning more useful, grounded, and measurable.`,
+    llmops: `Tighten orchestration around ${strongestSignal} with stronger prompts, routing, traces, and eval coverage.`,
+    mlops: `Stabilize the runtime around ${strongestSignal} so deployment, monitoring, and scale are production-ready.`,
   };
   return recommendations[agent.id] || "Coordinate with the lead agent.";
 }
@@ -653,8 +707,8 @@ function buildJoinReason(agent, nonZeroSignals) {
     .map(([signal]) => capitalize(signal));
 
   return themes.length
-    ? `${agent.domain} should join because the call is leaning heavily into ${themes.join(" and ")}.`
-    : `${agent.domain} can monitor the call, but is not the strongest join candidate yet.`;
+    ? `${agent.domain} should join because the build discussion is leaning heavily into ${themes.join(" and ")}.`
+    : `${agent.domain} can monitor the build thread, but is not the strongest join candidate yet.`;
 }
 
 function buildAgentBrief(agent, transcript, nonZeroSignals) {
@@ -668,25 +722,25 @@ function buildContributionPlan(agent, nonZeroSignals) {
   const secondSignal = nonZeroSignals[1]?.[0] || "alignment";
 
   const plans = {
-    sales: [
-      `Jump in when ${topSignal} turns commercial and clarify how we can keep momentum.`,
-      "Offer a concrete next step and de-risk the buyer's commitment path.",
+    frontend: [
+      `Step in when ${topSignal} impacts product clarity or the visual demo experience.`,
+      "Translate the current discussion into a better user flow, cleaner interaction, or sharper interface behavior.",
     ],
-    marketing: [
-      `Contribute when positioning around ${topSignal} or ${secondSignal} feels fuzzy.`,
-      "Translate the discussion into an internal story the client can retell.",
+    backend: [
+      `Jump in when ${topSignal} touches APIs, state flow, data contracts, or reliability.`,
+      "Propose the concrete server-side change needed to make the feature work end-to-end.",
     ],
-    bizops: [
-      `Join when implementation or ${topSignal} raises delivery concerns.`,
-      "Map the call into owners, milestones, and operational safeguards.",
+    ml: [
+      `Join when ${topSignal} changes the intelligence layer, scoring logic, or usefulness of outputs.`,
+      "Map the discussion to better model behavior, signal quality, or measurable agent decisions.",
     ],
-    outreach: [
-      `Listen for hesitation around ${topSignal} and suggest stakeholder follow-up.`,
-      "Capture who needs a recap and what trust gap needs closure after the call.",
+    llmops: [
+      `Contribute when ${topSignal} affects prompts, orchestration, tracing, or evaluation.`,
+      "Improve how agents coordinate, how outputs are observed, and how quality is measured.",
     ],
-    executive: [
-      `Step in when ${topSignal} needs strategic reassurance or executive air cover.`,
-      "Tie the decision back to business outcomes and downside protection.",
+    mlops: [
+      `Step in when ${topSignal} introduces deployment, infra, monitoring, or runtime concerns.`,
+      "Turn the discussion into a reliable serving path with observability and production safeguards.",
     ],
   };
 
@@ -697,17 +751,20 @@ function renderEmployeeAgents(agents) {
   employeeAgentGrid.innerHTML = agents
     .map(
       (agent) => `
-        <button class="employee-agent-card ${agent.status === "active" ? "active" : ""} ${selectedAgentId === agent.id ? "selected" : ""}" type="button" data-agent-id="${escapeHtml(agent.id)}">
+        <button class="employee-agent-card domain-${escapeHtml(agent.id)} ${agent.status === "active" ? "active" : ""} ${selectedAgentId === agent.id ? "selected" : ""} ${agent.uiState === "thinking" ? "thinking" : ""}" type="button" data-agent-id="${escapeHtml(agent.id)}">
           <div class="employee-agent-topline">
-            <div>
-              <h4>${escapeHtml(agent.name)}</h4>
-              <div class="employee-agent-domain">${escapeHtml(agent.title)} • ${escapeHtml(agent.domain)}</div>
+            <div class="employee-agent-ident">
+              ${agentAvatar(agent, "md")}
+              <div>
+                <h4>${escapeHtml(agent.name)}</h4>
+                <div class="employee-agent-domain">${escapeHtml(agent.title)} • ${escapeHtml(agent.domain)}</div>
+              </div>
             </div>
             <span class="agent-weight-pill">${agent.normalizedScore || 0}%</span>
           </div>
           <p class="bias-copy">${escapeHtml(agent.bias)}</p>
           <div class="score-row">
-            <span>Status: ${escapeHtml(agent.status)}</span>
+            <span>Status: ${escapeHtml(agent.uiState === "thinking" ? "thinking" : agent.status)}</span>
             <span>Focus: ${escapeHtml((agent.focusAreas || []).join(", ") || "none yet")}</span>
           </div>
           <div class="score-bar">
@@ -739,11 +796,14 @@ function renderJoinRecommendations(recommendations) {
     .map((agent) => {
       const decision = joinDecisions.get(agent.id) || (agent.shouldJoin ? "recommended" : "standby");
       return `
-        <article class="join-card ${agent.shouldJoin ? "recommended" : ""} ${selectedAgentId === agent.id ? "selected" : ""}" data-agent-id="${escapeHtml(agent.id)}">
+        <article class="join-card domain-${escapeHtml(agent.id)} ${agent.shouldJoin ? "recommended" : ""} ${selectedAgentId === agent.id ? "selected" : ""}" data-agent-id="${escapeHtml(agent.id)}">
           <div class="join-card-header">
-            <div>
-              <h4>${escapeHtml(agent.name)}</h4>
-              <div class="employee-agent-domain">${escapeHtml(agent.title)} • ${escapeHtml(agent.domain)}</div>
+            <div class="employee-agent-ident">
+              ${agentAvatar(agent, "md")}
+              <div>
+                <h4>${escapeHtml(agent.name)}</h4>
+                <div class="employee-agent-domain">${escapeHtml(agent.title)} • ${escapeHtml(agent.domain)}</div>
+              </div>
             </div>
             <span class="join-state-pill ${decision === "accepted" ? "accepted" : decision === "declined" ? "declined" : ""}">${escapeHtml(decision)}</span>
           </div>
@@ -793,11 +853,14 @@ function renderJoinedAgents(agents, nonZeroSignals) {
   joinedAgents.innerHTML = agents
     .map(
       (agent) => `
-        <article class="joined-agent-card ${selectedAgentId === agent.id ? "selected" : ""}" data-agent-id="${escapeHtml(agent.id)}">
+        <article class="joined-agent-card domain-${escapeHtml(agent.id)} ${selectedAgentId === agent.id ? "selected" : ""}" data-agent-id="${escapeHtml(agent.id)}">
           <div class="joined-agent-header">
-            <div>
-              <h4>${escapeHtml(agent.name)}</h4>
-              <div class="employee-agent-domain">${escapeHtml(agent.domain)} is now in the call</div>
+            <div class="employee-agent-ident">
+              ${agentAvatar(agent, "md")}
+              <div>
+                <h4>${escapeHtml(agent.name)}</h4>
+                <div class="employee-agent-domain">${escapeHtml(agent.domain)} is now in the call</div>
+              </div>
             </div>
             <span class="join-state-pill accepted">joined</span>
           </div>
@@ -830,10 +893,10 @@ function renderStringList(target, values) {
 }
 
 function buildAnalysisState(nonZeroSignals, leader, collaborators) {
-  const riskScore = (nonZeroSignals.find(([signal]) => signal === "risk")?.[1] || 0) +
-    (nonZeroSignals.find(([signal]) => signal === "objections")?.[1] || 0);
-  const momentumScore = (nonZeroSignals.find(([signal]) => signal === "urgency")?.[1] || 0) +
-    (nonZeroSignals.find(([signal]) => signal === "expansion")?.[1] || 0);
+  const riskScore = (nonZeroSignals.find(([signal]) => signal === "security")?.[1] || 0) +
+    (nonZeroSignals.find(([signal]) => signal === "deployment")?.[1] || 0);
+  const momentumScore = (nonZeroSignals.find(([signal]) => signal === "realtime")?.[1] || 0) +
+    (nonZeroSignals.find(([signal]) => signal === "ui")?.[1] || 0);
 
   const risk = riskScore >= 4 ? "High" : riskScore >= 2 ? "Medium" : "Low";
   const momentum = momentumScore >= 3 ? "Strong" : momentumScore >= 1 ? "Building" : "Neutral";
@@ -856,6 +919,194 @@ function renderAnalysisState(state) {
   momentumLevel.textContent = state.momentum;
   analysisSummary.textContent = state.summary;
   analysisAlerts.innerHTML = state.alerts.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  riskLevel.className = `analysis-value risk-${state.risk.toLowerCase()}`;
+  momentumLevel.className = `analysis-value momentum-${state.momentum.toLowerCase()}`;
+}
+
+function renderSwarmMap(agents, leader) {
+  if (!swarmMap) {
+    return;
+  }
+
+  if (!agents || !agents.length || !leader) {
+    swarmMap.dataset.empty = "true";
+    swarmMap.innerHTML =
+      '<p class="support-text swarm-map-empty">Process a transcript to watch the agent swarm assemble around the lead.</p>';
+    return;
+  }
+
+  swarmMap.dataset.empty = "false";
+
+  const cx = 50;
+  const cy = 50;
+  const rx = 34;
+  const ry = 31;
+  const satellites = agents.filter((agent) => agent.id !== leader.id);
+  const positioned = satellites.map((agent, index) => {
+    const angle = -Math.PI / 2 + Math.PI / satellites.length + (index * 2 * Math.PI) / satellites.length;
+    return {
+      ...agent,
+      x: +(cx + rx * Math.cos(angle)).toFixed(2),
+      y: +(cy + ry * Math.sin(angle)).toFixed(2),
+      active: agent.status === "active",
+    };
+  });
+
+  const links = positioned
+    .map(
+      (agent) => `
+        <line class="swarm-link domain-${escapeHtml(agent.id)} ${agent.active ? "active" : "idle"}"
+          x1="${agent.x}" y1="${agent.y}" x2="${cx}" y2="${cy}" vector-effect="non-scaling-stroke" />
+      `,
+    )
+    .join("");
+
+  const swarmNode = (agent, { lead = false } = {}) => `
+    <div class="swarm-node ${lead ? "swarm-node-lead" : agent.active ? "active" : "idle"} domain-${escapeHtml(agent.id)}"
+      style="left: ${lead ? cx : agent.x}%; top: ${lead ? cy : agent.y}%;">
+      ${lead ? '<span class="swarm-node-pulse" aria-hidden="true"></span>' : ""}
+      ${agentAvatar(agent, lead ? "lg" : "md")}
+      <span class="swarm-node-label">
+        <span class="swarm-node-name">${escapeHtml(agent.name.split(" ")[0])}</span>
+        <span class="swarm-node-score">${lead ? "Lead • " : ""}${agent.normalizedScore}%</span>
+      </span>
+    </div>
+  `;
+
+  swarmMap.innerHTML = `
+    <svg class="swarm-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      ${links}
+    </svg>
+    <div class="swarm-nodes">
+      ${swarmNode(leader, { lead: true })}
+      ${positioned.map((agent) => swarmNode(agent)).join("")}
+    </div>
+  `;
+}
+
+function renderThinkingStage() {
+  agentThinkingStage.innerHTML = `
+    <div class="thinking-stage-shell ${escapeHtml(agentThinkingState.mode)}">
+      <div class="thinking-stage-header">
+        <div>
+          <strong>${escapeHtml(buildThinkingHeadline())}</strong>
+          <p class="support-text">${escapeHtml(buildThinkingSubline())}</p>
+        </div>
+        <span class="thinking-glow ${agentThinkingState.mode === "thinking" ? "live" : ""}">
+          <span></span><span></span><span></span>
+        </span>
+      </div>
+      <div class="thinking-agent-list">
+        ${agentThinkingState.agents.map((agent) => `
+          <article class="thinking-agent-chip domain-${escapeHtml(agent.id)} ${escapeHtml(agent.state)}">
+            ${agentAvatar(agent, "sm")}
+            <div class="thinking-agent-body">
+              <div class="thinking-agent-name">
+                <strong>${escapeHtml(agent.name)}</strong>
+                ${agent.state === "lead" ? '<span class="lead-tag">Lead</span>' : ""}
+                <span class="employee-agent-domain">${escapeHtml(agent.domain)}</span>
+              </div>
+              <p class="support-text">${escapeHtml(agent.line)}</p>
+            </div>
+            <div class="thinking-wave" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </article>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function buildThinkingHeadline() {
+  if (agentThinkingState.mode === "thinking") {
+    return "Agents are actively thinking through the call";
+  }
+
+  if (agentThinkingState.mode === "ready") {
+    return "The agent squad is ready with a response";
+  }
+
+  return "The agent squad is standing by";
+}
+
+function buildThinkingSubline() {
+  if (agentThinkingState.mode === "thinking") {
+    return "Specialists are weighing the latest transcript and coordinating the next move.";
+  }
+
+  if (agentThinkingState.mode === "ready") {
+    return "Routing has settled and the top contributors are prepared to jump in.";
+  }
+
+  return "Once transcript activity starts, you’ll see specialists light up here in real time.";
+}
+
+function resetThinkingStage() {
+  window.clearTimeout(thinkingStageTimer);
+  agentThinkingState = {
+    mode: "idle",
+    agents: employeeAgents.slice(0, 3).map((agent) => ({
+      id: agent.id,
+      name: agent.name,
+      domain: agent.domain,
+      line: "Waiting for transcript context.",
+      state: "idle",
+    })),
+  };
+  renderThinkingStage();
+}
+
+function triggerThinkingStage(agents, nonZeroSignals) {
+  const topThemes = nonZeroSignals.slice(0, 3).map(([signal]) => capitalize(signal));
+  const featuredAgents = agents.slice(0, 3).map((agent, index) => ({
+    id: agent.id,
+    name: agent.name,
+    domain: agent.domain,
+    line: buildThinkingLine(agent, topThemes, index),
+    state: "thinking",
+  }));
+
+  window.clearTimeout(thinkingStageTimer);
+  agentThinkingState = {
+    mode: "thinking",
+    agents: featuredAgents,
+  };
+  renderThinkingStage();
+
+  thinkingStageTimer = window.setTimeout(() => {
+    agentThinkingState = {
+      mode: "ready",
+      agents: featuredAgents.map((agent, index) => ({
+        ...agent,
+        state: index === 0 ? "lead" : "ready",
+        line: index === 0
+          ? `${agent.domain} is leading the next move.`
+          : `${agent.domain} is ready to support the response.`,
+      })),
+    };
+    renderThinkingStage();
+    renderEmployeeAgents(
+      currentOrchestrationState.normalizedAgents.map((agent, index) => ({
+        ...agent,
+        uiState: index === 0 ? "lead" : index < 3 ? "ready" : "monitoring",
+      })),
+    );
+  }, 1800);
+}
+
+function buildThinkingLine(agent, topThemes, index) {
+  const primaryTheme = topThemes[0] || "Discovery";
+  const secondaryTheme = topThemes[1] || "Alignment";
+  const variants = {
+    frontend: `Exploring how ${primaryTheme.toLowerCase()} affects the interaction flow and visual clarity of the product.`,
+    backend: `Tracing ${primaryTheme.toLowerCase()} through routes, handlers, and integration boundaries.`,
+    ml: `Checking whether ${primaryTheme.toLowerCase()} should reshape signals, ranking, or model behavior.`,
+    llmops: `Reworking orchestration around ${primaryTheme.toLowerCase()} with better prompts, traces, and eval hooks.`,
+    mlops: `Pressure-testing runtime, deployment, and monitoring implications of ${primaryTheme.toLowerCase()}.`,
+  };
+
+  return variants[agent.id] || `${agent.domain} is reviewing the latest call context.`;
 }
 
 function buildInitialOrchestrationState() {
@@ -916,11 +1167,11 @@ function buildAgentTake(agent, transcript, nonZeroSignals) {
     : "No live transcript context has landed yet.";
 
   const takes = {
-    sales: `Sales take: the strongest move is to answer the client's ${topTheme} concern with a concrete next step, then keep the deal moving by clarifying commitment timing. Latest context: "${contextExcerpt}"`,
-    marketing: `Marketing take: we should sharpen the internal story around ${topTheme} and ${secondTheme} so the client can socialize this conversation after the call. Latest context: "${contextExcerpt}"`,
-    bizops: `Business Ops take: the conversation is opening implementation risk around ${topTheme}. I would step in with owners, onboarding sequence, and a realistic delivery path. Latest context: "${contextExcerpt}"`,
-    outreach: `Client Outreach take: I would capture who feels unconvinced around ${topTheme} and prepare targeted follow-up before momentum cools. Latest context: "${contextExcerpt}"`,
-    executive: `Executive take: this is the moment to tie ${topTheme} back to business impact, lower perceived risk, and reassure the buyer that leadership is aligned. Latest context: "${contextExcerpt}"`,
+    frontend: `Frontend take: the biggest leverage is to improve how ${topTheme} shows up in the interface so the demo feels clearer, faster, and more intuitive. Latest context: "${contextExcerpt}"`,
+    backend: `Backend take: the strongest move is to shore up the ${topTheme} path on the server side so requests, state, and integrations stay reliable. Latest context: "${contextExcerpt}"`,
+    ml: `ML take: we should turn ${topTheme} into a better decision signal so the agent system becomes more useful, grounded, and measurable. Latest context: "${contextExcerpt}"`,
+    llmops: `LLMOps take: this is where better prompts, routing, traces, and eval loops around ${topTheme} will noticeably improve the orchestration quality. Latest context: "${contextExcerpt}"`,
+    mlops: `MLOps take: we should make ${topTheme} production-safe by improving deployment, monitoring, and runtime resilience before the demo gets more complex. Latest context: "${contextExcerpt}"`,
   };
 
   return takes[agent.id] || `${agent.name} is ready with a focused contribution on ${topTheme}.`;
@@ -943,11 +1194,14 @@ function renderSelectedAgentConsole() {
   const logs = agentConsoleLog.get(agent?.id) || [];
 
   selectedAgentConsole.innerHTML = `
-    <section class="console-shell">
+    <section class="console-shell domain-${escapeHtml(agent?.id || "frontend")}">
       <div class="console-header">
-        <div>
-          <strong>${escapeHtml(agent?.name || "No agent selected")}</strong>
-          <div class="employee-agent-domain">${escapeHtml(agent?.title || "Standby")} • ${escapeHtml(agent?.domain || "Employee agent")}</div>
+        <div class="employee-agent-ident">
+          ${agentAvatar({ id: agent?.id || "frontend", name: agent?.name || "Agent" }, "lg")}
+          <div>
+            <strong>${escapeHtml(agent?.name || "No agent selected")}</strong>
+            <div class="employee-agent-domain">${escapeHtml(agent?.title || "Standby")} • ${escapeHtml(agent?.domain || "Employee agent")}</div>
+          </div>
         </div>
         <div class="console-status">
           <span class="join-state-pill ${accepted ? "accepted" : decision === "declined" ? "declined" : ""}">${escapeHtml(decision)}</span>
@@ -988,6 +1242,19 @@ function renderSelectedAgentConsole() {
       </div>
     </section>
   `;
+}
+
+function getInitials(name) {
+  return String(name || "Agent")
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0].toUpperCase())
+    .join("");
+}
+
+function agentAvatar(agent, size = "md") {
+  return `<span class="agent-avatar agent-avatar-${size} domain-${escapeHtml(agent.id || "frontend")}" aria-hidden="true">${escapeHtml(getInitials(agent.name))}</span>`;
 }
 
 function capitalize(value) {
@@ -1169,6 +1436,16 @@ function setLeftPaneFocus(mode) {
   toggleTranscriptFocusButton.textContent = mode === "transcript" ? "Reset size" : "Expand transcript";
 }
 
+function setTranscriptVisibility(visible) {
+  transcriptVisible = visible;
+  transcriptStage.classList.toggle("transcript-hidden", !visible);
+  toggleTranscriptVisibilityButton.textContent = visible ? "Hide transcript" : "Show transcript";
+
+  if (!visible && leftPaneFocus === "transcript") {
+    setLeftPaneFocus("default");
+  }
+}
+
 function updateWorkspaceWidth(pointerX) {
   const bounds = workspaceGrid.getBoundingClientRect();
   const nextWidth = pointerX - bounds.left;
@@ -1270,3 +1547,9 @@ function formatTimestamp(seconds) {
 }
 
 checkHealth();
+
+const greetingEl = document.getElementById("greetingTitle");
+if (greetingEl) {
+  const hour = new Date().getHours();
+  greetingEl.textContent = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+}
